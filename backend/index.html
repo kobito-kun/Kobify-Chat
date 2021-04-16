@@ -1,0 +1,71 @@
+<html>
+  
+<head>
+  <title>Baby come back</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.1.1/tailwind.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />  
+</head>
+
+<body>
+  <div class="min-h-screen bg-gradient-to-br from-blue-300 p-10 to-blue-600 grid grid-cols-1 lg:grid-cols-3">
+    <div class="hidden lg:block">
+      <h3 class="text-2xl text-center font-bold text-white">Public Channels</h3>
+
+    </div>
+    <div>
+      <h3 class="text-2xl text-center font-bold text-white">#General | Welcome to General Chat</h3>
+      <div id="messagebox" style="overflow-y: scroll; max-height: 440px;">
+        
+      </div>
+      <div class="p-4 m-2 rounded-lg bg-white">
+        <input type="text" class="border-b border-black w-full focus:outline-none p-2 shadow" id="message_value">
+      </div>
+    </div>
+    <div class="hidden lg:block">
+      <h3 class="text-2xl text-center font-bold text-white">User's Online</h3>
+    </div>
+  </div>
+</body>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.2/dist/chart.min.js"></script>
+<script>
+  const socket = io();
+  const messages = document.getElementById("messagebox")
+  const connection_message = document.getElementById("connection")
+  const message_value = document.getElementById("message_value")
+
+  socket.on('message', r => {
+    addMessageToBox(r)
+  })
+
+  socket.on('Connected', data => {
+    if(data.data.length > 0){
+      data.data.forEach(item => {
+        addMessageToBox(item)
+      })
+    }
+  })
+
+  message_value.addEventListener("keyup", (event) => {
+    if(event.keyCode == 13){
+      event.preventDefault();
+      sendMessage()
+    }
+  })
+
+  const sendMessage = () => {
+    socket.emit('message', {
+      "action": "add",
+      "id": null,
+      "user": "Kobi",
+      "message": message_value.value
+    })
+    message_value.value = "";
+  }
+
+  const addMessageToBox = (data) => {
+    messages.innerHTML += `<li class="list-none bg-white rounded-lg shadow p-2 m-2"><span class="font-bold">${data.user}</span><p>${data.message}</p></li`
+  }
+
+</script>
+</html>
