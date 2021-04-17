@@ -5,7 +5,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.1.1/tailwind.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />  
 </head>
-
 <body>
   <div class="min-h-screen bg-gradient-to-br from-blue-300 p-10 to-blue-600 grid grid-cols-1 lg:grid-cols-3">
     <div class="hidden lg:block">
@@ -23,6 +22,9 @@
     </div>
     <div class="hidden lg:block">
       <h3 class="text-2xl text-center font-bold text-white">User's Online</h3>
+      <div id="usersbox" class="bg-white rounded-lg p-4 m-2">
+      
+      </div>      
     </div>
   </div>
 </body>
@@ -33,17 +35,29 @@
   const messages = document.getElementById("messagebox")
   const connection_message = document.getElementById("connection")
   const message_value = document.getElementById("message_value")
+  const users_box = document.getElementById("usersbox")
+  let user
 
   socket.on('message', r => {
     addMessageToBox(r)
   })
 
-  socket.on('Connected', data => {
-    if(data.data.length > 0){
-      data.data.forEach(item => {
-        addMessageToBox(item)
-      })
+  socket.on('connected_initial_message', data => {
+    user = `${data.user_id}`
+  })
+
+  socket.on('users_online', data => {
+    users_box.innerHTML = ""
+    data.users.forEach(item => users_box.innerHTML += `<li>${item}</li>`)
+  })
+
+  socket.on('user_activity', (data) => {
+    const variablename = data.joined ? "Just joined the chat." : "Just left the chat"
+    const message = {
+      "user": data.user,
+      "message": variablename
     }
+    addMessageToBox(message)
   })
 
   message_value.addEventListener("keyup", (event) => {
@@ -57,7 +71,7 @@
     socket.emit('message', {
       "action": "add",
       "id": null,
-      "user": "Kobi",
+      "user": user,
       "message": message_value.value
     })
     message_value.value = "";

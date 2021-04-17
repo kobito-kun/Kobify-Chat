@@ -7,25 +7,36 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');  
 });
 
-var users = 0;
-var messages = [];
+var users = [];
 
 io.on('connection', (socket) => {
 
-  io.emit('Connected', {
-    "data": messages
-  }, users++, console.log(`${users} established.`) );
+  users.push(socket.id)
+
+  io.emit('users_online', {
+    "users": users
+  })
+
+  io.emit('connected_initial_message', {
+    "user_id": String(socket.id)
+  });
+
+  io.emit("user_activity", {
+    "user": String(socket.id),
+    "joined": true
+  })
+
+  socket.on('disconnect', () => {
+    users = users.filter(user => user !== socket.id)
+    console.log(users)
+    io.emit("users_online", {"users": users})
+    io.emit("user_activity", {"user": String(socket.id), "joined": false})
+  })
 
   socket.on('message', object => {
     const {action, id, user, message} = object
     if(action === "add"){ 
       io.emit('message', {
-        "action": "add",
-        "id": v4(),
-        "user": user,
-        "message": message
-      })
-      messages.push({
         "action": "add",
         "id": v4(),
         "user": user,
