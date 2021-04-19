@@ -9,19 +9,14 @@ app.get('/', (req, res) => {
 
 var users = [];
 
-io.on('connection', async (socket) => {
-
-  var current_user = []
-  users.forEach(item => {
-    if(String(item.id)===String(socket.id)){
-      current_user.push(item)
-    }})
+io.on('connection', (socket) => {
+  console.log(users)
 
   io.emit('users_online', {
     "users": users
   })
 
-  await socket.on('connected_initial_message', data => {
+  socket.on('connected_initial_message', data => {
     users.push({
       "username": data,
       "id": String(socket.id)
@@ -29,13 +24,12 @@ io.on('connection', async (socket) => {
   })
 
   io.emit("user_activity", {
-    "user": current_user,
+    "user": users,
     "joined": true
   })
 
 
   socket.on('disconnect', () => {
-    users = users.filter(item => item.id !== socket.id)
     console.log(users)
     io.emit("users_online", {"users": users})
     io.emit("user_activity", {"user": users.filter(item => String(item.id) === String(socket.id)), "joined": false})
