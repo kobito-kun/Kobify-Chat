@@ -1,15 +1,16 @@
 <html>
   
 <head>
-  <title>Baby come back</title>
+  <title>Kobify Chat</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.1.1/tailwind.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" />  
 </head>
-<body>
-  <div class="min-h-screen bg-gradient-to-br from-blue-200 p-10 to-blue-600 grid grid-cols-1 lg:grid-cols-3">
+<body>  
+  <div class="min-h-screen bg-gradient-to-br from-blue-200 to-blue-600">
+    <div class="p-10 grid grid-cols-1 lg:grid-cols-3" id="bodyone">
     <div class="hidden lg:block">
       <h3 class="text-2xl text-center font-bold text-white">Public Channels</h3>
-
+      <div id="firebaseui-auth-container"></div>
     </div>
     <div>
       <h3 class="text-2xl text-center font-bold text-white">#General | Welcome to General Chat</h3>
@@ -26,6 +27,10 @@
       
       </div>      
     </div>
+    </div>
+    <div class="h-full flex justify-center items-center" id="body2">
+      <input class="px-4 py-2 border border-black rounded-lg shadow focus:outline-none" placeholder="Input a username" id="initial_username" /><button onclick="submitUsername()" class="font-bold bg-white px-4 py-2 rounded-lg shadow mx-2 transform duration-300 hover:scale-105">Submit</button>
+    </div>
   </div>
 </body>
 <script src="/socket.io/socket.io.js"></script>
@@ -38,23 +43,38 @@
   const users_box = document.getElementById("usersbox")
   let user
 
+  const submitUsername = () => {
+    const user_value = document.getElementById("initial_username").value
+    localStorage.setItem("username", user_value)
+    location.reload()
+  }
+
   socket.on('message', r => {
     addMessageToBox(r)
   })
 
   socket.on('connected_initial_message', data => {
-    user = `${data.user_id}`
+    if(localStorage.getItem("username")){
+      user = localStorage.getItem("username")
+      document.getElementById("body2").style.display = "none";
+      socket.emit("connected_initial_message", user)
+    }else{
+      document.getElementById("bodyone").style.display = "none";
+      user = data.user_id
+    }
   })
 
   socket.on('users_online', data => {
+    console.log(data)
     users_box.innerHTML = ""
-    data.users.forEach(item => users_box.innerHTML += `<li>${item}</li>`)
+    data.users.forEach(item => users_box.innerHTML += `<li>${item.username}</li>`)
   })
 
   socket.on('user_activity', (data) => {
+    console.log(data)
     const variablename = data.joined ? "Just joined the chat." : "Just left the chat"
     const message = {
-      "user": data.user,
+      "user": data.user.username,
       "message": variablename
     }
     addMessageToBox(message)

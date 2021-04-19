@@ -10,9 +10,6 @@ app.get('/', (req, res) => {
 var users = [];
 
 io.on('connection', (socket) => {
-
-  users.push(socket.id)
-
   io.emit('users_online', {
     "users": users
   })
@@ -21,16 +18,26 @@ io.on('connection', (socket) => {
     "user_id": String(socket.id)
   });
 
+  socket.on('connected_initial_message', data => {
+    console.log(data)
+    users.push({
+      "username": data,
+      "id": String(socket.id)
+    })
+  })
+
   io.emit("user_activity", {
-    "user": String(socket.id),
+    "user": null,
     "joined": true
+  }, () => {
+    users.find(item => item.id === socket.id)
   })
 
   socket.on('disconnect', () => {
-    users = users.filter(user => user !== socket.id)
+    users = users.filter(item => item.id !== socket.id)
     console.log(users)
     io.emit("users_online", {"users": users})
-    io.emit("user_activity", {"user": String(socket.id), "joined": false})
+    io.emit("user_activity", {"user": users.filter(item => String(item.id) === String(socket.id)), "joined": false})
   })
 
   socket.on('message', object => {
