@@ -71,7 +71,7 @@
   })
 
   socket.on('user_activity', (data) => {
-    console.log(data)
+    console.log("User_act", data)
     const variablename = data.joined ? "Just joined the chat." : "Just left the chat"
     const message = {
       "user": data.user.username,
