@@ -80,15 +80,7 @@ io.on('connection', (socket) => {
 
   socket.on('message', object => {
     const {action, id, user, message} = object
-    if(action === "add"){ 
-      sendMessage(action, id, user, message)
-    }else if(action === "delete"){
-      sendMessage(action, id, user, message)
-    }else if(action === "edit"){
-      sendMessage(action, id, user, message)
-    }else{
-      console.log("Error...")
-    }
+    sendMessage(action, id, user, message)
   })
 
   // end trigger / events //
