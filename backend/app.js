@@ -10,58 +10,89 @@ app.get('/', (req, res) => {
 var users = [];
 
 io.on('connection', (socket) => {
-  console.log(users)
 
-  io.emit('users_online', {
-    "users": users
-  })
+  // sending stuff functions: //
 
-  socket.on('connected_initial_message', data => {
-    users.push({
-      "username": data,
-      "id": String(socket.id)
+  const sendMessage = (action, id, user, message) => {
+    io.emit('message', {
+      "action": action,
+      "id": id,
+      "user": user,
+      "message": message
     })
-  })
+  }
+  
+  const sendUsersOnline = () => {
+    io.emit('users_online', {
+      "users": users
+    })
+  }
 
-  io.emit("user_activity", {
-    "user": users,
-    "joined": true
-  })
+  const sendUserActivity = (joined) => {
+    io.emit('user_activity', {
+      "user": String(socket.id),
+      "joined": joined
+    })
+  }  
 
+  const sendInitialData = () => {
+    io.emit('initial_data', {
+      "user": String(socket.id)
+    })
+  }
+
+  const userManagement = bool => {
+    if(bool){
+      users.push(String(socket.id))
+    }else{
+      var output = []
+      users.forEach(item => {
+        if(item !== String(socket.id)){
+          output.push(item)
+        }
+      })
+      users = output
+    }
+  }
+
+  // end functions //
+
+  // initial functions //
+
+  userManagement(true)
+  sendUsersOnline()
+  sendUserActivity(true)
+  sendInitialData()
+  
+  // end intial functions //
+  
+  // final functions // 
 
   socket.on('disconnect', () => {
-    console.log(users)
-    io.emit("users_online", {"users": users})
-    io.emit("user_activity", {"user": users.filter(item => String(item.id) === String(socket.id)), "joined": false})
+    userManagement(false)
+    sendUsersOnline()
+    sendUserActivity(false)
   })
+
+  // end final functions
+
+  // trigger / events //
 
   socket.on('message', object => {
     const {action, id, user, message} = object
     if(action === "add"){ 
-      io.emit('message', {
-        "action": "add",
-        "id": v4(),
-        "user": user,
-        "message": message
-      })
+      sendMessage(action, id, user, message)
     }else if(action === "delete"){
-      io.emit('message', {
-        "action": "delete",
-        "id": id,
-        "user": user,
-        "message": null,
-      })
+      sendMessage(action, id, user, message)
     }else if(action === "edit"){
-      io.emit('message', {
-        "action": "edit",
-        "id": id,
-        "user": user,
-        "message": message
-      })
+      sendMessage(action, id, user, message)
     }else{
       console.log("Error...")
     }
   })
+
+  // end trigger / events //
+
 });
 
 http.listen(3000, () => console.log("Listening"));

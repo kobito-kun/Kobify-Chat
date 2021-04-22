@@ -24,18 +24,18 @@
     <div class="hidden lg:block">
       <h3 class="text-2xl text-center font-bold text-white">User's Online</h3>
       <div id="usersbox" class="bg-white rounded-lg p-4 m-2">
-      
+
       </div>      
     </div>
-    </div>
-    <div class="h-full flex justify-center items-center" id="body2">
-      <input class="px-4 py-2 border border-black rounded-lg shadow focus:outline-none" placeholder="Input a username" id="initial_username" /><button onclick="submitUsername()" class="font-bold bg-white px-4 py-2 rounded-lg shadow mx-2 transform duration-300 hover:scale-105">Submit</button>
     </div>
   </div>
 </body>
 <script src="/socket.io/socket.io.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.0.2/dist/chart.min.js"></script>
 <script>
+
+  // variables //
+
   const socket = io();
   const messages = document.getElementById("messagebox")
   const connection_message = document.getElementById("connection")
@@ -43,49 +43,35 @@
   const users_box = document.getElementById("usersbox")
   let user
 
-  const submitUsername = () => {
-    const user_value = document.getElementById("initial_username").value
-    localStorage.setItem("username", user_value)
-    location.reload()
-  }
+  // end variables //
 
-  socket.on('message', r => {
-    addMessageToBox(r)
-  })
-
-  socket.on('connected_initial_message', data => {
-    if(localStorage.getItem("username")){
-      user = localStorage.getItem("username")
-      document.getElementById("body2").style.display = "none";
-      socket.emit("connected_initial_message", user)
-    }else{
-      document.getElementById("bodyone").style.display = "none";
-      user = data.user_id
-    }
-  })
+  // trigger / events //
 
   socket.on('users_online', data => {
-    console.log(data)
     users_box.innerHTML = ""
-    data.users.forEach(item => users_box.innerHTML += `<li>${item.username}</li>`)
+    data.users.forEach(item => users_box.innerHTML += `<li>${item}</li>`)
   })
 
+  socket.on('message', data => {
+    addMessageToBox(data)
+  })
+
+  socket.on('initial_data', data => {
+    user = data.user;
+  })
+
+  // end trigger / events //
+
   socket.on('user_activity', (data) => {
-    console.log("User_act", data)
-    const variablename = data.joined ? "Just joined the chat." : "Just left the chat"
+    const joined_message = data.joined ? "Just joined the chat." : "Just left the chat"
     const message = {
-      "user": data.user.username,
-      "message": variablename
+      "user": data.user,
+      "message": joined_message
     }
     addMessageToBox(message)
   })
 
-  message_value.addEventListener("keyup", (event) => {
-    if(event.keyCode == 13){
-      event.preventDefault();
-      sendMessage()
-    }
-  })
+  // functions //
 
   const sendMessage = () => {
     socket.emit('message', {
@@ -98,8 +84,22 @@
   }
 
   const addMessageToBox = (data) => {
-    messages.innerHTML += `<li class="list-none bg-white rounded-lg shadow p-2 m-2"><span class="font-bold">${data.user}</span><p>${data.message}</p></li`
+    messages.innerHTML += 
+    `<li class="list-none bg-white rounded-lg shadow p-2 m-2">
+      <span class="font-bold">${data.user}</span>
+      <p>${data.message}</p>
+     </li>`
   }
+
+  // end functions //
+
+  // front end side extras
+  message_value.addEventListener("keyup", (event) => {
+    if(event.keyCode == 13){
+      event.preventDefault();
+      sendMessage()
+    }
+  })
 
 </script>
 </html>
